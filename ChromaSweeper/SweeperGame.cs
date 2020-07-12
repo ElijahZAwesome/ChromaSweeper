@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
+using System.Reflection.Metadata;
 using System.Security.Cryptography.X509Certificates;
 using Chroma;
 using Chroma.Diagnostics.Logging;
@@ -16,6 +17,7 @@ namespace ChromaSweeper
     internal class SweeperGame : Game
     {
         public static SweeperGame Instance;
+        public readonly Random Rand = new Random();
 
         public Board Board;
         public Vector2 BoardPosition;
@@ -27,17 +29,15 @@ namespace ChromaSweeper
         public bool GameOver;
         public bool GameWon;
 
-
-        public int ScorebarHeight = 37;
-
-
         public SpriteSheet NumbersSheet;
         public SpriteSheet TilesSheet;
         public SpriteSheet FaceSheet;
+        public NumberGroup LeftNumbers;
+        public NumberGroup RightNumbers;
 
         private Texture WindowIcon;
-        public readonly Random Rand = new Random();
-        private Log Log { get; } = LogManager.GetForCurrentAssembly();
+
+        private Tile previouslyHeldTile;
 
         internal SweeperGame()
         {
@@ -51,13 +51,27 @@ namespace ChromaSweeper
         public void InitBoard(Vector2? mousePos = null)
         {
             Window.Size = new Size((int)Board.BoardSize.X * Tile.TileSize + 20,
-                (int)Board.BoardSize.Y * Tile.TileSize + 27 + ScorebarHeight);
+                (int)Board.BoardSize.Y * Tile.TileSize + 27 + Constants.ScoreboardHeight);
 
-            BoardPosition = new Vector2(Constants.BoardPos.X + Constants.BoardBorderThickness, 
+            BoardPosition = new Vector2(Constants.BoardPos.X + Constants.BoardBorderThickness,
                 Constants.BoardPos.Y + Constants.BoardBorderThickness);
 
+            FaceSheet.Position = new Vector2(Window.Center.X - (Constants.SmileySize / 2), Constants.SmileyY);
+            LeftNumbers = new NumberGroup(new Vector2(Constants.ScoreboardPos.X + Constants.LeftNumberOffset + 1, Constants.NumbersY + 1), NumbersSheet);
+            int numbersWidth = NumbersSheet.FrameWidth * 3 + 2;
+            RightNumbers = new NumberGroup(new Vector2(
+                (int) (Constants.ScoreboardPos.X + (Window.Size.Width - (int)Constants.ScoreboardPos.X - 5) - numbersWidth - Constants.RightNumberOffset) + 1, 
+                Constants.NumbersY + 1), NumbersSheet);
+
+            FaceSheet.CurrentFrame = (int) SmileyFaces.Smile;
+
+            GameOver = false;
+            GameWon = false;
+            GameStarted = false;
             FlagsLeft = Board.BombAmount;
             Time = 0;
+            LeftNumbers.UpdateNumber(FlagsLeft);
+            RightNumbers.UpdateNumber((int) Math.Floor(Time));
             Board.InitBoard(mousePos);
         }
 
@@ -70,8 +84,9 @@ namespace ChromaSweeper
             TilesSheet.TextureFilteringMode = TextureFilteringMode.NearestNeighbor;
             FaceSheet.TextureFilteringMode = TextureFilteringMode.NearestNeighbor;
 
-            WindowIcon = Content.Load<Texture>("icon.png");
+            WindowIcon = Content.Load<Texture>("Minesweeper.ico");
             Window.SetIcon(WindowIcon);
+            Window.Title = Constants.WindowTitle;
 
             Board.BoardSize = new Vector2(9, 9);
             Board.BombAmount = 10;
@@ -82,20 +97,42 @@ namespace ChromaSweeper
         {
             context.Clear(Constants.BackgroundColor);
             // Frame rectangle
-            DrawHUDRectangle(context, new Rectangle(0, 0, Window.Size.Width + 3, Window.Size.Height + 3), 3, true);
+            DrawHudRectangle(context, new Rectangle(0, 0, Window.Size.Width + 3, Window.Size.Height + 3), 3, 1);
 
             // Board rectangle
-            DrawHUDRectangle(context,
-                new Rectangle((int) Constants.BoardPos.X, (int) Constants.BoardPos.Y, 
-                (int) ((Board.BoardSize.X * Tile.TileSize) + (Constants.BoardBorderThickness * 2)), 
-                (int) ((Board.BoardSize.Y * Tile.TileSize) + (Constants.BoardBorderThickness * 2))), 
-                Constants.BoardBorderThickness, false);
+            DrawHudRectangle(context,
+                new Rectangle((int)Constants.BoardPos.X, (int)Constants.BoardPos.Y,
+                    Window.Size.Width - (int)Constants.BoardPos.X - 5,
+                (int)((Board.BoardSize.Y * Tile.TileSize) + (Constants.BoardBorderThickness * 2))),
+                Constants.BoardBorderThickness, 0);
 
-            // Scoreboard
-            DrawHUDRectangle(context,
-                new Rectangle((int) Constants.ScoreboardPos.X, (int) Constants.ScoreboardPos.Y, 
-                    Window.Size.Width - (int)Constants.ScoreboardPos.X - 5 + Constants.ScoreboardBorderThickness,
-                    45), Constants.ScoreboardBorderThickness, false);
+            // Scoreboard rectangle
+            DrawHudRectangle(context,
+                new Rectangle((int)Constants.ScoreboardPos.X, (int)Constants.ScoreboardPos.Y,
+                    Window.Size.Width - (int)Constants.ScoreboardPos.X - 5,
+                    Constants.ScoreboardHeight), Constants.ScoreboardBorderThickness, 0);
+
+            // Smiley Rectangle
+            DrawHudRectangle(context,
+                new Rectangle((int) Window.Center.X - ((Constants.SmileySize + 1) / 2), Constants.SmileyY, Constants.SmileySize + 1, Constants.SmileySize + 1),
+                1, 2);
+
+            int numbersWidth = NumbersSheet.FrameWidth * 3 + 2;
+
+            // Left Numbers rectangle
+            DrawHudRectangle(context,
+                new Rectangle((int) (Constants.ScoreboardPos.X + Constants.LeftNumberOffset), Constants.NumbersY,
+                    numbersWidth, NumbersSheet.FrameHeight + 2), 1, 0);
+
+            // Right Numbers rectangle
+            DrawHudRectangle(context,
+                new Rectangle((int) (Constants.ScoreboardPos.X + (Window.Size.Width - (int)Constants.ScoreboardPos.X - 5) - numbersWidth - Constants.RightNumberOffset), 
+                    Constants.NumbersY,
+                    numbersWidth, NumbersSheet.FrameHeight + 2), 1, 0);
+            
+            FaceSheet.Draw(context);
+            LeftNumbers.Draw(context);
+            RightNumbers.Draw(context);
 
             Board.Draw(context);
         }
@@ -103,39 +140,44 @@ namespace ChromaSweeper
         /// <summary>
         /// Draws a rectangle used for HUD elements.
         /// </summary>
+        /// <param name="context">RenderContext to draw onto</param>
         /// <param name="rect">The rectangle to draw</param>
         /// <param name="lineWidth">How thicc the line should be</param>
-        /// <param name="drawRight">Do or don't draw the right part</param>
-        private void DrawHUDRectangle(RenderContext context, Rectangle rect, int lineWidth, bool white)
+        /// <param name="whiteOrCopyPen">0 = normal colors, 1 = white and right half isn't drawn, 2 = both halves are dark</param>
+        private void DrawHudRectangle(RenderContext context, Rectangle rect, int lineWidth, int whiteOrCopyPen)
         {
             float oldThickness = Graphics.LineThickness;
             Graphics.LineThickness = 1;
 
+            rect.X++;
+            rect.Width--;
+
             // Top and left lines
-            Color colorToDraw = white ? Constants.RightRectangleColor : Constants.LeftRectangleColor;
+            Color colorToDraw = whiteOrCopyPen == 1 ? Constants.RightRectangleColor : Constants.LeftRectangleColor;
             for (int i = 0; i < lineWidth; i++)
             {
-                context.Line(new Vector2(rect.X, rect.Y + i), 
-                    new Vector2(rect.X + rect.Width - i, rect.Y + i), 
+                context.Line(new Vector2(rect.X, rect.Y + i),
+                    new Vector2(rect.X + rect.Width - i - 1, rect.Y + i),
                     colorToDraw);
 
-                context.Line(new Vector2(rect.X + i, rect.Y), 
-                    new Vector2(rect.X + i, rect.Y + rect.Height - i), 
+                context.Line(new Vector2(rect.X + i, rect.Y),
+                    new Vector2(rect.X + i, rect.Y + rect.Height - i - 1),
                     colorToDraw);
             }
 
-            if (!white)
+            if (whiteOrCopyPen != 1)
             {
                 // Right and bottom lines
+                Color newColorToDraw = whiteOrCopyPen < 2 ? Constants.RightRectangleColor : Constants.LeftRectangleColor;
                 for (int i = 0; i < lineWidth; i++)
                 {
-                    context.Line(new Vector2(rect.X + rect.Width - i, rect.Y + i), 
-                        new Vector2(rect.X + rect.Width - i, rect.Y + rect.Height - i), 
-                        Constants.RightRectangleColor);
+                    context.Line(new Vector2(rect.X + rect.Width - i, rect.Y + i + 1),
+                        new Vector2(rect.X + rect.Width - i, rect.Y + rect.Height),
+                        newColorToDraw);
 
-                    context.Line(new Vector2(rect.X + rect.Width, rect.Y + rect.Height - i), 
-                        new Vector2(rect.X + i, rect.Y + rect.Height - i), 
-                        Constants.RightRectangleColor);
+                    context.Line(new Vector2(rect.X + rect.Width, rect.Y + rect.Height - i - 1),
+                        new Vector2(rect.X + i, rect.Y + rect.Height - i),
+                        newColorToDraw);
                 }
             }
 
@@ -145,6 +187,7 @@ namespace ChromaSweeper
         public void BombHit(Vector2 hitPosition)
         {
             GameOver = true;
+            FaceSheet.CurrentFrame = (int) SmileyFaces.Dead;
 
             foreach (var tile in Board.BoardArray)
             {
@@ -154,8 +197,8 @@ namespace ChromaSweeper
 
         public void Victory()
         {
-            Log.Info("You won dipshit");
             GameWon = true;
+            FaceSheet.CurrentFrame = (int) SmileyFaces.Victory;
 
             foreach (var tile in Board.BoardArray)
             {
@@ -168,7 +211,7 @@ namespace ChromaSweeper
             }
         }
 
-        public List<Tile> GetNeighbours(Vector2 pos)
+        public List<Tile> GetNeighbors(Vector2 pos)
         {
             List<Tile> final = new List<Tile>();
             for (int dx = (pos.X > 0 ? -1 : 0); dx <= (pos.X < Board.BoardSize.X - 1 ? 1 : 0); ++dx)
@@ -177,7 +220,7 @@ namespace ChromaSweeper
                 {
                     if (dx != 0 || dy != 0)
                     {
-                        var neighbor = Board.BoardArray[(int) (pos.X + dx), (int) (pos.Y + dy)];
+                        var neighbor = Board.BoardArray[(int)(pos.X + dx), (int)(pos.Y + dy)];
                         final.Add(neighbor);
                     }
                 }
@@ -186,33 +229,110 @@ namespace ChromaSweeper
             return final;
         }
 
-        protected override void MouseReleased(MouseButtonEventArgs e)
+        protected override void Update(float delta)
         {
-            Vector2 relPosition = e.Position - BoardPosition;
-            Vector2 tilePosition = new Vector2((float)Math.Floor(relPosition.X / 16), (float)Math.Floor(relPosition.Y / 16));
-            if (!GameStarted)
+            if (!GameOver && !GameWon && GameStarted)
             {
-                GameStarted = true;
-                InitBoard(tilePosition);
+                Time += delta;
+                RightNumbers.UpdateNumber((int) Math.Floor(Time));
             }
-            if (GameOver || GameWon)
-                return;
-            if (tilePosition.X >= 0 && tilePosition.Y >= 0)
+
+            if (previouslyHeldTile != null)
             {
-                if (tilePosition.X < Board.BoardSize.X && tilePosition.Y < Board.BoardSize.Y)
+                previouslyHeldTile.BeingHeld = false;
+                previouslyHeldTile = null;
+            }
+
+            if (Mouse.IsButtonDown(MouseButton.Left) && !GameOver && !GameWon)
+            {
+                FaceSheet.CurrentFrame = (int) SmileyFaces.Anticipation;
+                var heldTile = GetBoardPosFromMousePos(Mouse.GetPosition());
+                if (heldTile.HasValue)
                 {
-                    Tile clickedTile = Board.BoardArray[(int)tilePosition.X, (int)tilePosition.Y];
-                    switch (e.Button)
+                    previouslyHeldTile = Board.BoardArray[(int) heldTile.Value.X, (int) heldTile.Value.Y];
+                    if(!previouslyHeldTile.Checked)
+                        previouslyHeldTile.BeingHeld = true;
+                }
+            }
+
+            if (Mouse.IsButtonDown(MouseButton.Left))
+            {
+                if(IsMouseOverlappingSmiley())
+                {
+                    FaceSheet.CurrentFrame = (int)SmileyFaces.PressedSmile;
+                }
+                else
+                {
+                    if (GameOver)
                     {
-                        case MouseButton.Left:
-                            clickedTile.Check();
-                            break;
-                        case MouseButton.Right:
-                            clickedTile.Flag();
-                            break;
+                        FaceSheet.CurrentFrame = (int) SmileyFaces.Dead;
+                    }
+                    else if (GameWon)
+                    {
+                        FaceSheet.CurrentFrame = (int) SmileyFaces.Victory;
                     }
                 }
             }
+        }
+
+        protected override void MouseReleased(MouseButtonEventArgs e)
+        {
+            // Smiley Logic
+            
+            if(!GameWon && !GameOver)
+                FaceSheet.CurrentFrame = (int) SmileyFaces.Smile;
+
+            if(IsMouseOverlappingSmiley())
+            {
+                InitBoard();
+                return;
+            }
+
+            // Board logic
+            Vector2? tilePosition = GetBoardPosFromMousePos(e.Position);
+            if (!GameStarted)
+            {
+                InitBoard(tilePosition);
+                GameStarted = true;
+            }
+            if (GameOver || GameWon)
+                return;
+            if (tilePosition.HasValue)
+            {
+                Tile clickedTile = Board.BoardArray[(int)tilePosition.Value.X, (int)tilePosition.Value.Y];
+                switch (e.Button)
+                {
+                    case MouseButton.Left:
+                        clickedTile.Check();
+                        break;
+                    case MouseButton.Right:
+                        clickedTile.Flag();
+                        break;
+                }
+            }
+        }
+
+        private Vector2? GetBoardPosFromMousePos(Vector2 mousePos)
+        {
+            Vector2 relPosition = mousePos - BoardPosition;
+            Vector2 tilePosition = new Vector2((float)Math.Floor(relPosition.X / 16), (float)Math.Floor(relPosition.Y / 16));
+            if (tilePosition.X < 0 || tilePosition.X >= Board.BoardSize.X ||
+                tilePosition.Y < 0 || tilePosition.Y >= Board.BoardSize.Y)
+            {
+                return null;
+            }
+            return tilePosition;
+        }
+
+        private bool IsMouseOverlappingSmiley()
+        {
+            var mousePos = Mouse.GetPosition();
+            if (mousePos.X > FaceSheet.Position.X && mousePos.X < FaceSheet.Position.X + FaceSheet.FrameWidth &&
+                mousePos.Y > FaceSheet.Position.Y && mousePos.Y < FaceSheet.Position.Y + FaceSheet.FrameHeight)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

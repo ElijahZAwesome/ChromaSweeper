@@ -16,6 +16,8 @@ namespace ChromaSweeper
         public bool Bomb;
         public bool Checked;
 
+        public bool BeingHeld;
+
         public bool Flagged;
         public bool Question;
         public Vector2 Position;
@@ -90,16 +92,20 @@ namespace ChromaSweeper
                 if (Question)
                 {
                     Flagged = false;
-                    SweeperGame.Instance.FlagsLeft++;
                     Question = false;
                 }
                 else
+                {
                     Question = true;
+                    SweeperGame.Instance.FlagsLeft++;
+                    SweeperGame.Instance.LeftNumbers.UpdateNumber(SweeperGame.Instance.FlagsLeft);
+                }
             }
             else
             {
                 Flagged = true;
                 SweeperGame.Instance.FlagsLeft--;
+                SweeperGame.Instance.LeftNumbers.UpdateNumber(SweeperGame.Instance.FlagsLeft);
             }
             
             DetermineFrame();
@@ -107,7 +113,7 @@ namespace ChromaSweeper
 
         private void CheckNeighbors()
         {
-            SweeperGame.Instance.GetNeighbours(Position).ForEach(neighbour =>
+            SweeperGame.Instance.GetNeighbors(Position).ForEach(neighbour =>
             {
                 if(!neighbour.Checked && !neighbour.Bomb)
                     neighbour.Check();
@@ -116,7 +122,17 @@ namespace ChromaSweeper
 
         public void Draw(RenderContext context)
         {
-            TileSheet.Draw(context);
+            if (BeingHeld)
+            {
+                int oldFrame = TileSheet.CurrentFrame;
+                TileSheet.CurrentFrame = 0;
+                TileSheet.Draw(context);
+                TileSheet.CurrentFrame = oldFrame;
+            }
+            else
+            {
+                TileSheet.Draw(context);
+            }
         }
 
         public void DetermineFrame()
@@ -163,7 +179,7 @@ namespace ChromaSweeper
         private int GetNumberToDisplay()
         {
             int surroundingBombs = 0;
-            SweeperGame.Instance.GetNeighbours(Position).ForEach(neighbour =>
+            SweeperGame.Instance.GetNeighbors(Position).ForEach(neighbour =>
             {
                 if (neighbour.Bomb)
                 {
