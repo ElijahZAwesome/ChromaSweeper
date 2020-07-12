@@ -15,6 +15,8 @@ namespace ChromaSweeper
 
         public Tile[,] BoardArray;
 
+        public int UncheckedTiles;
+
         public Board()
         {
 
@@ -22,7 +24,7 @@ namespace ChromaSweeper
 
         public void InitBoard(Vector2? mousePos = null)
         {
-
+            UncheckedTiles = (int)(BoardSize.X * BoardSize.Y) - BombAmount;
             bool[,] BombArray = new bool[(int)BoardSize.X,(int)BoardSize.Y];
             int bombsLeft = BombAmount;
             while (bombsLeft > 0)

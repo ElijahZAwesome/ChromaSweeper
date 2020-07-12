@@ -21,16 +21,14 @@ namespace ChromaSweeper
         public Vector2 BoardPosition;
 
         public int FlagsLeft;
-        public int Score;
+        public float Time;
 
-        public bool GameStarted = false;
-        public bool GameOver = false;
+        public bool GameStarted;
+        public bool GameOver;
+        public bool GameWon;
 
 
         public int ScorebarHeight = 37;
-
-        // UI
-        public Panel BoardPanel;
 
 
         public SpriteSheet NumbersSheet;
@@ -45,8 +43,6 @@ namespace ChromaSweeper
         {
             Instance = this;
 
-            BoardPanel = new Panel(BoardPosition, );
-
             Board = new Board();
 
             BoardPosition = Vector2.Zero;
@@ -57,8 +53,11 @@ namespace ChromaSweeper
             Window.Size = new Size((int)Board.BoardSize.X * Tile.TileSize + 20,
                 (int)Board.BoardSize.Y * Tile.TileSize + 27 + ScorebarHeight);
 
-            BoardPosition = new Vector2(12, 19 + ScorebarHeight);
+            BoardPosition = new Vector2(Constants.BoardPos.X + Constants.BoardBorderThickness, 
+                Constants.BoardPos.Y + Constants.BoardBorderThickness);
 
+            FlagsLeft = Board.BombAmount;
+            Time = 0;
             Board.InitBoard(mousePos);
         }
 
@@ -67,6 +66,9 @@ namespace ChromaSweeper
             NumbersSheet = new SpriteSheet(Content.ContentRoot + "/numbers.jpg", 13, 23);
             TilesSheet = new SpriteSheet(Content.ContentRoot + "/tiles.jpg", 16, 16);
             FaceSheet = new SpriteSheet(Content.ContentRoot + "/faces.jpg", 26, 26);
+            NumbersSheet.TextureFilteringMode = TextureFilteringMode.NearestNeighbor;
+            TilesSheet.TextureFilteringMode = TextureFilteringMode.NearestNeighbor;
+            FaceSheet.TextureFilteringMode = TextureFilteringMode.NearestNeighbor;
 
             WindowIcon = Content.Load<Texture>("icon.png");
             Window.SetIcon(WindowIcon);
@@ -78,9 +80,66 @@ namespace ChromaSweeper
 
         protected override void Draw(RenderContext context)
         {
-            context.Clear(new Color(192, 192, 192));
+            context.Clear(Constants.BackgroundColor);
+            // Frame rectangle
+            DrawHUDRectangle(context, new Rectangle(0, 0, Window.Size.Width + 3, Window.Size.Height + 3), 3, true);
+
+            // Board rectangle
+            DrawHUDRectangle(context,
+                new Rectangle((int) Constants.BoardPos.X, (int) Constants.BoardPos.Y, 
+                (int) ((Board.BoardSize.X * Tile.TileSize) + (Constants.BoardBorderThickness * 2)), 
+                (int) ((Board.BoardSize.Y * Tile.TileSize) + (Constants.BoardBorderThickness * 2))), 
+                Constants.BoardBorderThickness, false);
+
+            // Scoreboard
+            DrawHUDRectangle(context,
+                new Rectangle((int) Constants.ScoreboardPos.X, (int) Constants.ScoreboardPos.Y, 
+                    Window.Size.Width - (int)Constants.ScoreboardPos.X - 5 + Constants.ScoreboardBorderThickness,
+                    45), Constants.ScoreboardBorderThickness, false);
 
             Board.Draw(context);
+        }
+
+        /// <summary>
+        /// Draws a rectangle used for HUD elements.
+        /// </summary>
+        /// <param name="rect">The rectangle to draw</param>
+        /// <param name="lineWidth">How thicc the line should be</param>
+        /// <param name="drawRight">Do or don't draw the right part</param>
+        private void DrawHUDRectangle(RenderContext context, Rectangle rect, int lineWidth, bool white)
+        {
+            float oldThickness = Graphics.LineThickness;
+            Graphics.LineThickness = 1;
+
+            // Top and left lines
+            Color colorToDraw = white ? Constants.RightRectangleColor : Constants.LeftRectangleColor;
+            for (int i = 0; i < lineWidth; i++)
+            {
+                context.Line(new Vector2(rect.X, rect.Y + i), 
+                    new Vector2(rect.X + rect.Width - i, rect.Y + i), 
+                    colorToDraw);
+
+                context.Line(new Vector2(rect.X + i, rect.Y), 
+                    new Vector2(rect.X + i, rect.Y + rect.Height - i), 
+                    colorToDraw);
+            }
+
+            if (!white)
+            {
+                // Right and bottom lines
+                for (int i = 0; i < lineWidth; i++)
+                {
+                    context.Line(new Vector2(rect.X + rect.Width - i, rect.Y + i), 
+                        new Vector2(rect.X + rect.Width - i, rect.Y + rect.Height - i), 
+                        Constants.RightRectangleColor);
+
+                    context.Line(new Vector2(rect.X + rect.Width, rect.Y + rect.Height - i), 
+                        new Vector2(rect.X + i, rect.Y + rect.Height - i), 
+                        Constants.RightRectangleColor);
+                }
+            }
+
+            Graphics.LineThickness = oldThickness;
         }
 
         public void BombHit(Vector2 hitPosition)
@@ -90,6 +149,22 @@ namespace ChromaSweeper
             foreach (var tile in Board.BoardArray)
             {
                 tile.DetermineFrame();
+            }
+        }
+
+        public void Victory()
+        {
+            Log.Info("You won dipshit");
+            GameWon = true;
+
+            foreach (var tile in Board.BoardArray)
+            {
+                if ((!tile.Flagged || tile.Question) && tile.Bomb)
+                {
+                    tile.Flagged = true;
+                    tile.Question = false;
+                    tile.DetermineFrame();
+                }
             }
         }
 
@@ -120,7 +195,7 @@ namespace ChromaSweeper
                 GameStarted = true;
                 InitBoard(tilePosition);
             }
-            if (GameOver)
+            if (GameOver || GameWon)
                 return;
             if (tilePosition.X >= 0 && tilePosition.Y >= 0)
             {

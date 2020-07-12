@@ -14,6 +14,12 @@ namespace Chroma.Graphics
         public Vector2 Origin;
         public Vector2 Shearing;
 
+        public TextureFilteringMode TextureFilteringMode
+        {
+            get => Texture.FilteringMode;
+            set => Texture.FilteringMode = value;
+        }
+
         public float Rotation;
 
         public Sprite(string filePath)

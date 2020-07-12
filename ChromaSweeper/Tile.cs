@@ -15,6 +15,7 @@ namespace ChromaSweeper
         public int Number;
         public bool Bomb;
         public bool Checked;
+
         public bool Flagged;
         public bool Question;
         public Vector2 Position;
@@ -49,10 +50,22 @@ namespace ChromaSweeper
                 {
                     // Unflag
                     Flag();
+                    return;
                 }
+
+                return;
             }
 
+            if (Checked)
+                return;
+
             Checked = true;
+            SweeperGame.Instance.Board.UncheckedTiles--;
+
+            if (SweeperGame.Instance.Board.UncheckedTiles <= 0)
+            {
+                SweeperGame.Instance.Victory();
+            }
 
             if (Bomb)
             {
@@ -69,11 +82,15 @@ namespace ChromaSweeper
 
         public void Flag()
         {
+            if (Checked)
+                return;
+
             if (Flagged)
             {
                 if (Question)
                 {
                     Flagged = false;
+                    SweeperGame.Instance.FlagsLeft++;
                     Question = false;
                 }
                 else
@@ -82,6 +99,7 @@ namespace ChromaSweeper
             else
             {
                 Flagged = true;
+                SweeperGame.Instance.FlagsLeft--;
             }
             
             DetermineFrame();
