@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\GitHub\Chroma.UI\Chroma.UI\Chroma.UI.csproj" />
+    <ProjectReference Include="..\Chroma.UI\Chroma.UI\Chroma.UI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

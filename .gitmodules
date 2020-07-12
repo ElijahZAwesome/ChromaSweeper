@@ -1,0 +1,3 @@
+[submodule "Chroma.UI"]
+	path = Chroma.UI
+	url = git://github.com/ElijahZAwesome/Chroma.UI.git

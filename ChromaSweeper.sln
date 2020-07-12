@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChromaSweeper", "ChromaSweeper\ChromaSweeper.csproj", "{7FB81410-533E-4FC0-854E-7CAFEE2A53CA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Chroma.UI", "..\GitHub\Chroma.UI\Chroma.UI\Chroma.UI.csproj", "{EA661D4F-03EC-4AFF-9365-76D71C6901F9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Chroma.UI", "Chroma.UI\Chroma.UI\Chroma.UI.csproj", "{B70406D7-B0D3-4815-A404-070534E702FA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{7FB81410-533E-4FC0-854E-7CAFEE2A53CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7FB81410-533E-4FC0-854E-7CAFEE2A53CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7FB81410-533E-4FC0-854E-7CAFEE2A53CA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EA661D4F-03EC-4AFF-9365-76D71C6901F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EA661D4F-03EC-4AFF-9365-76D71C6901F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EA661D4F-03EC-4AFF-9365-76D71C6901F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EA661D4F-03EC-4AFF-9365-76D71C6901F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B70406D7-B0D3-4815-A404-070534E702FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B70406D7-B0D3-4815-A404-070534E702FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B70406D7-B0D3-4815-A404-070534E702FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B70406D7-B0D3-4815-A404-070534E702FA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
