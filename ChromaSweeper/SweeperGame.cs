@@ -9,6 +9,7 @@ using Chroma.Diagnostics.Logging;
 using Chroma.Graphics;
 using Chroma.Input;
 using Chroma.Input.EventArgs;
+using Chroma.UI;
 using Chroma.UI.Controls;
 using Color = Chroma.Graphics.Color;
 
@@ -35,6 +36,8 @@ namespace ChromaSweeper
         public NumberGroup LeftNumbers;
         public NumberGroup RightNumbers;
 
+        private SettingsManager settingsManager;
+
         private Texture WindowIcon;
 
         private Tile previouslyHeldTile;
@@ -52,6 +55,7 @@ namespace ChromaSweeper
         {
             Window.Size = new Size((int)Board.BoardSize.X * Tile.TileSize + 20,
                 (int)Board.BoardSize.Y * Tile.TileSize + 27 + Constants.ScoreboardHeight);
+            settingsManager = new SettingsManager(Window.Size);
 
             BoardPosition = new Vector2(Constants.BoardPos.X + Constants.BoardBorderThickness,
                 Constants.BoardPos.Y + Constants.BoardBorderThickness);
@@ -77,6 +81,8 @@ namespace ChromaSweeper
 
         protected override void LoadContent()
         {
+            new UiContentLoader(Content).LoadUiContent();
+
             NumbersSheet = new SpriteSheet(Content.ContentRoot + "/numbers.jpg", 13, 23);
             TilesSheet = new SpriteSheet(Content.ContentRoot + "/tiles.jpg", 16, 16);
             FaceSheet = new SpriteSheet(Content.ContentRoot + "/faces.jpg", 26, 26);
@@ -135,6 +141,11 @@ namespace ChromaSweeper
             RightNumbers.Draw(context);
 
             Board.Draw(context);
+
+            if (settingsManager.Shown)
+            {
+                settingsManager.Draw(context, Graphics);
+            }
         }
 
         /// <summary>
@@ -231,6 +242,12 @@ namespace ChromaSweeper
 
         protected override void Update(float delta)
         {
+            if (settingsManager.Shown)
+            {
+                settingsManager.Update(delta);
+                return;
+            }
+
             if (!GameOver && !GameWon && GameStarted)
             {
                 Time += delta;
@@ -277,8 +294,10 @@ namespace ChromaSweeper
 
         protected override void MouseReleased(MouseButtonEventArgs e)
         {
+            if (settingsManager.Shown)
+                return;
+
             // Smiley Logic
-            
             if(!GameWon && !GameOver)
                 FaceSheet.CurrentFrame = (int) SmileyFaces.Smile;
 
@@ -333,6 +352,28 @@ namespace ChromaSweeper
                 return true;
             }
             return false;
+        }
+
+        protected override void KeyPressed(KeyEventArgs e)
+        {
+            if (e.KeyCode == KeyCode.Escape)
+            {
+                if (!settingsManager.Shown)
+                {
+                    settingsManager.Show();
+                }
+                else
+                {
+                    settingsManager.Hide();
+                }
+            }
+
+            settingsManager.KeyPressed(e);
+        }
+
+        protected override void TextInput(TextInputEventArgs e)
+        {
+            settingsManager.TextInput(e);
         }
     }
 }

@@ -30,5 +30,9 @@ namespace ChromaSweeper
         public static int LeftNumberOffset = ScoreboardBorderThickness + 5;
         public static int RightNumberOffset = ScoreboardBorderThickness + 7;
 
+        // Settings
+        public static int SettingsPanelOffset = 20;
+        public static Color SettingsPanelColor = Color.White;
+
     }
 }

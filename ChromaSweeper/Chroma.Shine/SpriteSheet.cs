@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 
@@ -79,8 +80,8 @@ namespace Chroma.Graphics
         {
             _sourceRectangles = new List<Rectangle>();
 
-            var totalFramesH = Texture.Width / FrameWidth;
-            var totalFramesV = Texture.Height / FrameHeight;
+            var totalFramesH = Math.Ceiling((float)Texture.Width / FrameWidth);
+            var totalFramesV = Math.Ceiling((float)Texture.Height / FrameHeight);
 
             for (var y = 0; y < totalFramesV; y++)
             {
