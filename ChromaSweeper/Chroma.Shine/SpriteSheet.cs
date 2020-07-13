@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
+using System.Reflection;
 
 namespace Chroma.Graphics
 {
@@ -74,6 +75,25 @@ namespace Chroma.Graphics
             {
                 context.Transform.Pop();
             }
+        }
+
+        public void DrawSpecificFrame(RenderContext context, int frame)
+        {
+            int oldFrame = CurrentFrame;
+            CurrentFrame = frame;
+            Draw(context);
+            CurrentFrame = oldFrame;
+        }
+
+        public void DrawManual(RenderContext context, int frame, Vector2 position, Vector2 scale)
+        {
+            var oldPos = Position;
+            var oldScale = Scale;
+            Position = position;
+            Scale = scale;
+            DrawSpecificFrame(context, frame);
+            Position = oldPos;
+            Scale = oldScale;
         }
 
         private void CalculateFrameRectangles()

@@ -1,16 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Numerics;
-using System.Reflection.Metadata;
-using System.Security.Cryptography.X509Certificates;
 using Chroma;
-using Chroma.Diagnostics.Logging;
 using Chroma.Graphics;
 using Chroma.Input;
 using Chroma.Input.EventArgs;
 using Chroma.UI;
-using Chroma.UI.Controls;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Numerics;
 using Color = Chroma.Graphics.Color;
 
 namespace ChromaSweeper
@@ -51,23 +47,26 @@ namespace ChromaSweeper
             BoardPosition = Vector2.Zero;
         }
 
-        public void InitBoard(Vector2? mousePos = null)
+        public void InitBoard()
         {
             Window.Size = new Size((int)Board.BoardSize.X * Tile.TileSize + 20,
                 (int)Board.BoardSize.Y * Tile.TileSize + 27 + Constants.ScoreboardHeight);
-            settingsManager = new SettingsManager(Window.Size);
+            if(settingsManager != null)
+                settingsManager.Init(Window.Size);
+            else
+                settingsManager = new SettingsManager(Window.Size);
 
             BoardPosition = new Vector2(Constants.BoardPos.X + Constants.BoardBorderThickness,
                 Constants.BoardPos.Y + Constants.BoardBorderThickness);
 
             FaceSheet.Position = new Vector2(Window.Center.X - (Constants.SmileySize / 2), Constants.SmileyY);
-            LeftNumbers = new NumberGroup(new Vector2(Constants.ScoreboardPos.X + Constants.LeftNumberOffset + 1, Constants.NumbersY + 1), NumbersSheet);
+            LeftNumbers = new NumberGroup(new Vector2(Constants.ScoreboardPos.X + Constants.LeftNumberOffset + 1, Constants.NumbersY + 1));
             int numbersWidth = NumbersSheet.FrameWidth * 3 + 2;
             RightNumbers = new NumberGroup(new Vector2(
-                (int) (Constants.ScoreboardPos.X + (Window.Size.Width - (int)Constants.ScoreboardPos.X - 5) - numbersWidth - Constants.RightNumberOffset) + 1, 
-                Constants.NumbersY + 1), NumbersSheet);
+                (int)(Constants.ScoreboardPos.X + (Window.Size.Width - (int)Constants.ScoreboardPos.X - 5) - numbersWidth - Constants.RightNumberOffset) + 1,
+                Constants.NumbersY + 1));
 
-            FaceSheet.CurrentFrame = (int) SmileyFaces.Smile;
+            FaceSheet.CurrentFrame = (int)SmileyFaces.Smile;
 
             GameOver = false;
             GameWon = false;
@@ -75,8 +74,8 @@ namespace ChromaSweeper
             FlagsLeft = Board.BombAmount;
             Time = 0;
             LeftNumbers.UpdateNumber(FlagsLeft);
-            RightNumbers.UpdateNumber((int) Math.Floor(Time));
-            Board.InitBoard(mousePos);
+            RightNumbers.UpdateNumber((int)Math.Floor(Time));
+            Board.InitBoard();
         }
 
         protected override void LoadContent()
@@ -120,22 +119,22 @@ namespace ChromaSweeper
 
             // Smiley Rectangle
             DrawHudRectangle(context,
-                new Rectangle((int) Window.Center.X - ((Constants.SmileySize + 1) / 2), Constants.SmileyY, Constants.SmileySize + 1, Constants.SmileySize + 1),
+                new Rectangle((int)Window.Center.X - ((Constants.SmileySize + 1) / 2), Constants.SmileyY, Constants.SmileySize + 1, Constants.SmileySize + 1),
                 1, 2);
 
             int numbersWidth = NumbersSheet.FrameWidth * 3 + 2;
 
             // Left Numbers rectangle
             DrawHudRectangle(context,
-                new Rectangle((int) (Constants.ScoreboardPos.X + Constants.LeftNumberOffset), Constants.NumbersY,
+                new Rectangle((int)(Constants.ScoreboardPos.X + Constants.LeftNumberOffset), Constants.NumbersY,
                     numbersWidth, NumbersSheet.FrameHeight + 2), 1, 0);
 
             // Right Numbers rectangle
             DrawHudRectangle(context,
-                new Rectangle((int) (Constants.ScoreboardPos.X + (Window.Size.Width - (int)Constants.ScoreboardPos.X - 5) - numbersWidth - Constants.RightNumberOffset), 
+                new Rectangle((int)(Constants.ScoreboardPos.X + (Window.Size.Width - (int)Constants.ScoreboardPos.X - 5) - numbersWidth - Constants.RightNumberOffset),
                     Constants.NumbersY,
                     numbersWidth, NumbersSheet.FrameHeight + 2), 1, 0);
-            
+
             FaceSheet.Draw(context);
             LeftNumbers.Draw(context);
             RightNumbers.Draw(context);
@@ -198,7 +197,7 @@ namespace ChromaSweeper
         public void BombHit(Vector2 hitPosition)
         {
             GameOver = true;
-            FaceSheet.CurrentFrame = (int) SmileyFaces.Dead;
+            FaceSheet.CurrentFrame = (int)SmileyFaces.Dead;
 
             foreach (var tile in Board.BoardArray)
             {
@@ -209,7 +208,7 @@ namespace ChromaSweeper
         public void Victory()
         {
             GameWon = true;
-            FaceSheet.CurrentFrame = (int) SmileyFaces.Victory;
+            FaceSheet.CurrentFrame = (int)SmileyFaces.Victory;
 
             foreach (var tile in Board.BoardArray)
             {
@@ -251,7 +250,7 @@ namespace ChromaSweeper
             if (!GameOver && !GameWon && GameStarted)
             {
                 Time += delta;
-                RightNumbers.UpdateNumber((int) Math.Floor(Time));
+                RightNumbers.UpdateNumber((int)Math.Floor(Time));
             }
 
             if (previouslyHeldTile != null)
@@ -262,19 +261,19 @@ namespace ChromaSweeper
 
             if (Mouse.IsButtonDown(MouseButton.Left) && !GameOver && !GameWon)
             {
-                FaceSheet.CurrentFrame = (int) SmileyFaces.Anticipation;
+                FaceSheet.CurrentFrame = (int)SmileyFaces.Anticipation;
                 var heldTile = GetBoardPosFromMousePos(Mouse.GetPosition());
                 if (heldTile.HasValue)
                 {
-                    previouslyHeldTile = Board.BoardArray[(int) heldTile.Value.X, (int) heldTile.Value.Y];
-                    if(!previouslyHeldTile.Checked)
+                    previouslyHeldTile = Board.BoardArray[(int)heldTile.Value.X, (int)heldTile.Value.Y];
+                    if (!previouslyHeldTile.Checked)
                         previouslyHeldTile.BeingHeld = true;
                 }
             }
 
             if (Mouse.IsButtonDown(MouseButton.Left))
             {
-                if(IsMouseOverlappingSmiley())
+                if (IsMouseOverlappingSmiley())
                 {
                     FaceSheet.CurrentFrame = (int)SmileyFaces.PressedSmile;
                 }
@@ -282,11 +281,11 @@ namespace ChromaSweeper
                 {
                     if (GameOver)
                     {
-                        FaceSheet.CurrentFrame = (int) SmileyFaces.Dead;
+                        FaceSheet.CurrentFrame = (int)SmileyFaces.Dead;
                     }
                     else if (GameWon)
                     {
-                        FaceSheet.CurrentFrame = (int) SmileyFaces.Victory;
+                        FaceSheet.CurrentFrame = (int)SmileyFaces.Victory;
                     }
                 }
             }
@@ -298,10 +297,10 @@ namespace ChromaSweeper
                 return;
 
             // Smiley Logic
-            if(!GameWon && !GameOver)
-                FaceSheet.CurrentFrame = (int) SmileyFaces.Smile;
+            if (!GameWon && !GameOver)
+                FaceSheet.CurrentFrame = (int)SmileyFaces.Smile;
 
-            if(IsMouseOverlappingSmiley())
+            if (IsMouseOverlappingSmiley())
             {
                 InitBoard();
                 return;
@@ -311,7 +310,8 @@ namespace ChromaSweeper
             Vector2? tilePosition = GetBoardPosFromMousePos(e.Position);
             if (!GameStarted)
             {
-                InitBoard(tilePosition);
+                Board.MoveBombAtPos(tilePosition);
+                Board.InitTiles();
                 GameStarted = true;
             }
             if (GameOver || GameWon)

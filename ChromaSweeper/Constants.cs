@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Chroma.Graphics;
 using System.Numerics;
-using System.Text;
-using Chroma.Graphics;
 
 namespace ChromaSweeper
 {
     public static class Constants
     {
-        
+
         // Strings
         public static string WindowTitle = "Minesweeper";
 

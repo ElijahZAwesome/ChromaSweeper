@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Numerics;
-using System.Text;
-using Chroma.Graphics;
+﻿using Chroma.Graphics;
 using Chroma.Input.EventArgs;
 using Chroma.UI.Controls;
+using System;
+using System.Drawing;
+using System.Numerics;
 using Color = Chroma.Graphics.Color;
 
 namespace ChromaSweeper
@@ -24,8 +22,14 @@ namespace ChromaSweeper
 
         public SettingsManager(Size windowSize)
         {
-            bgPanel = new Panel(new Vector2(Constants.SettingsPanelOffset), 
-                new Vector2(windowSize.Width - Constants.SettingsPanelOffset * 2, windowSize.Height - Constants.SettingsPanelOffset * 2), 
+            Init(windowSize);
+        }
+
+        public void Init(Size windowSize)
+        {
+            Dispose();
+            bgPanel = new Panel(new Vector2(Constants.SettingsPanelOffset),
+                new Vector2(windowSize.Width - Constants.SettingsPanelOffset * 2, windowSize.Height - Constants.SettingsPanelOffset * 2),
                 Constants.SettingsPanelColor)
             {
                 BorderColor = Color.Black,
@@ -45,7 +49,7 @@ namespace ChromaSweeper
             };
             acceptBtn.ButtonPressed += Accept;
 
-            boardWidthField = new InputField(new Vector2(windowSize.Width / 2 - 60, 
+            boardWidthField = new InputField(new Vector2(windowSize.Width / 2 - 60,
                 bgPanel.CalculatedPosition.Y + bgPanel.CalculatedSize.Y / 2 - 25 - cancelBtn.CalculatedSize.Y * 2))
             {
                 AllowOverflow = false,
@@ -54,7 +58,7 @@ namespace ChromaSweeper
                 Placeholder = "Width: " + SweeperGame.Instance.Board.BoardSize.X
             };
 
-            boardHeightField = new InputField(new Vector2(windowSize.Width / 2 - 60, 
+            boardHeightField = new InputField(new Vector2(windowSize.Width / 2 - 60,
                 bgPanel.CalculatedPosition.Y + bgPanel.CalculatedSize.Y / 2 - cancelBtn.CalculatedSize.Y * 2))
             {
                 AllowOverflow = false,
@@ -82,6 +86,7 @@ namespace ChromaSweeper
             Shown = false;
         }
 
+#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         private void Cancel(object? sender, EventArgs e)
         {
             Hide();
@@ -116,10 +121,11 @@ namespace ChromaSweeper
             if (newBombAmount > (newWidth * newHeight) - 1)
                 newBombAmount = (newWidth * newHeight) - 1;
 
-            SweeperGame.Instance.Board.BoardSize = new Vector2(newWidth , newHeight);
+            SweeperGame.Instance.Board.BoardSize = new Vector2(newWidth, newHeight);
             SweeperGame.Instance.Board.BombAmount = newBombAmount;
             SweeperGame.Instance.InitBoard();
         }
+#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 
         public void Draw(RenderContext context, GraphicsManager gfx)
         {
@@ -128,7 +134,7 @@ namespace ChromaSweeper
                 bgPanel.Draw(context, gfx);
                 boardWidthField.Draw(context, gfx);
                 boardHeightField.Draw(context, gfx);
-                bombAmountField.Draw(context, gfx); 
+                bombAmountField.Draw(context, gfx);
                 cancelBtn.Draw(context, gfx);
                 acceptBtn.Draw(context, gfx);
             }
@@ -165,6 +171,22 @@ namespace ChromaSweeper
                 boardHeightField.TextInput(e);
                 bombAmountField.TextInput(e);
             }
+        }
+
+        public void Dispose()
+        {
+            if(bgPanel != null)
+                bgPanel.Dispose();
+            if(boardWidthField != null)
+                boardWidthField.Dispose();
+            if(boardHeightField != null)
+                boardHeightField.Dispose();
+            if(bombAmountField != null)
+                bombAmountField.Dispose();
+            if(cancelBtn != null)
+                cancelBtn.Dispose();
+            if(acceptBtn != null)
+                acceptBtn.Dispose();
         }
 
     }

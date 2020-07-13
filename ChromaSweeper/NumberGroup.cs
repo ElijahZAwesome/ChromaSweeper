@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Chroma.Graphics;
+using System;
 using System.Numerics;
-using System.Text;
-using Chroma.Graphics;
 
 namespace ChromaSweeper
 {
@@ -12,19 +10,19 @@ namespace ChromaSweeper
         private int number;
         private Vector2 position;
 
-        private SpriteSheet sheetNumOne;
-        private SpriteSheet sheetNumTwo;
-        private SpriteSheet sheetNumThree;
+        private int firstDigitFrame;
+        private Vector2 firstDigitPosition;
+        private int secondDigitFrame;
+        private Vector2 secondDigitPosition;
+        private int thirdDigitFrame;
+        private Vector2 thirdDigitPosition;
 
-        public NumberGroup(Vector2 pos, SpriteSheet spriteSheet)
+        public NumberGroup(Vector2 pos)
         {
             position = pos;
-            sheetNumOne = spriteSheet.Copy();
-            sheetNumTwo = spriteSheet.Copy();
-            sheetNumThree = spriteSheet.Copy();
-            sheetNumOne.Position = pos;
-            sheetNumTwo.Position = new Vector2(pos.X + sheetNumTwo.FrameWidth, pos.Y);
-            sheetNumThree.Position = new Vector2(pos.X + (sheetNumTwo.FrameWidth * 2), pos.Y);
+            thirdDigitPosition = pos;
+            secondDigitPosition = new Vector2(pos.X + SweeperGame.Instance.NumbersSheet.FrameWidth, pos.Y);
+            firstDigitPosition = new Vector2(pos.X + (SweeperGame.Instance.NumbersSheet.FrameWidth * 2), pos.Y);
         }
 
         public void UpdateNumber(int num)
@@ -34,25 +32,27 @@ namespace ChromaSweeper
             int lowDigit;
             int highNum;
 
-            if (num >= 0) {
+            if (num >= 0)
+            {
                 lowDigit = num / 100;
                 highNum = num % 100;
             }
-            else {
+            else
+            {
                 lowDigit = 10;
                 highNum = Math.Abs(num);
             }
 
-            sheetNumOne.CurrentFrame = lowDigit;
-            sheetNumTwo.CurrentFrame = highNum / 10;
-            sheetNumThree.CurrentFrame = highNum % 10;
+            thirdDigitFrame = lowDigit;
+            secondDigitFrame = highNum / 10;
+            firstDigitFrame = highNum % 10;
         }
 
         public void Draw(RenderContext context)
         {
-            sheetNumOne.Draw(context);
-            sheetNumTwo.Draw(context);
-            sheetNumThree.Draw(context);
+            SweeperGame.Instance.NumbersSheet.DrawManual(context, thirdDigitFrame, thirdDigitPosition, Vector2.One);
+            SweeperGame.Instance.NumbersSheet.DrawManual(context, secondDigitFrame, secondDigitPosition, Vector2.One);
+            SweeperGame.Instance.NumbersSheet.DrawManual(context, firstDigitFrame, firstDigitPosition, Vector2.One);
         }
 
     }

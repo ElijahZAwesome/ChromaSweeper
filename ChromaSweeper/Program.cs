@@ -1,5 +1,4 @@
-﻿using System;
-using Chroma.Graphics;
+﻿using Chroma.Graphics;
 
 namespace ChromaSweeper
 {

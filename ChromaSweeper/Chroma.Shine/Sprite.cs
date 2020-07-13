@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Chroma.MemoryManagement;
+using System;
 using System.IO;
 using System.Numerics;
-using Chroma.MemoryManagement;
 
 namespace Chroma.Graphics
 {
@@ -47,8 +47,8 @@ namespace Chroma.Graphics
             }
 
             context.DrawTexture(
-                Texture, 
-                Position, 
+                Texture,
+                Position,
                 Scale,
                 Origin,
                 Rotation

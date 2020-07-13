@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using Chroma.Graphics;
 using System.Numerics;
-using System.Text;
-using Chroma.Graphics;
 
 namespace ChromaSweeper
 {
@@ -20,21 +16,30 @@ namespace ChromaSweeper
 
         public bool Flagged;
         public bool Question;
+        /// <summary>
+        /// The tile based position on the board
+        /// </summary>
+        public Vector2 BoardPosition;
+        /// <summary>
+        /// The scaled, pixel based position of this tile to render
+        /// </summary>
         public Vector2 Position;
+        public Vector2 Scale;
 
-        private SpriteSheet TileSheet;
+        private int FrameToDisplay;
 
-        public Tile(bool isBomb, Vector2 pos, SpriteSheet sheet)
+        public Tile(Vector2 pos)
         {
             Number = 0;
-            Bomb = isBomb;
-            Position = pos;
-            TileSheet = sheet;
+            BoardPosition = pos;
+            Bomb = false;
             Checked = false;
             Flagged = false;
 
-            TileSheet.Scale = new Vector2(TileSize / TileSheet.FrameWidth);
-            TileSheet.Position = (Position * TileSize) + SweeperGame.Instance.BoardPosition;
+            Scale = new Vector2(TileSize / SweeperGame.Instance.TilesSheet.FrameWidth);
+            Position = (BoardPosition * TileSize) + SweeperGame.Instance.BoardPosition;
+
+            DetermineFrame();
         }
 
         public void Init()
@@ -71,7 +76,7 @@ namespace ChromaSweeper
 
             if (Bomb)
             {
-                SweeperGame.Instance.BombHit(Position);
+                SweeperGame.Instance.BombHit(BoardPosition);
             }
 
             if (Number == 0 && !Bomb)
@@ -107,15 +112,15 @@ namespace ChromaSweeper
                 SweeperGame.Instance.FlagsLeft--;
                 SweeperGame.Instance.LeftNumbers.UpdateNumber(SweeperGame.Instance.FlagsLeft);
             }
-            
+
             DetermineFrame();
         }
 
         private void CheckNeighbors()
         {
-            SweeperGame.Instance.GetNeighbors(Position).ForEach(neighbour =>
+            SweeperGame.Instance.GetNeighbors(BoardPosition).ForEach(neighbour =>
             {
-                if(!neighbour.Checked && !neighbour.Bomb)
+                if (!neighbour.Checked && !neighbour.Bomb)
                     neighbour.Check();
             });
         }
@@ -124,14 +129,11 @@ namespace ChromaSweeper
         {
             if (BeingHeld)
             {
-                int oldFrame = TileSheet.CurrentFrame;
-                TileSheet.CurrentFrame = 0;
-                TileSheet.Draw(context);
-                TileSheet.CurrentFrame = oldFrame;
+                SweeperGame.Instance.TilesSheet.DrawManual(context, 0, Position, Scale);
             }
             else
             {
-                TileSheet.Draw(context);
+                SweeperGame.Instance.TilesSheet.DrawManual(context, FrameToDisplay, Position, Scale);
             }
         }
 
@@ -139,47 +141,47 @@ namespace ChromaSweeper
         {
             if (Checked && Bomb)
             {
-                TileSheet.CurrentFrame = 11;
+                FrameToDisplay = 11;
                 return;
             }
 
             if (Question)
             {
-                TileSheet.CurrentFrame = 14;
+                FrameToDisplay = 14;
                 return;
             }
 
             if (Bomb && SweeperGame.Instance.GameOver)
             {
-                TileSheet.CurrentFrame = 13;
+                FrameToDisplay = 13;
                 return;
             }
 
             if (Flagged && !Bomb && SweeperGame.Instance.GameOver)
             {
-                TileSheet.CurrentFrame = 12;
+                FrameToDisplay = 12;
                 return;
             }
 
             if (Flagged)
             {
-                TileSheet.CurrentFrame = 10;
+                FrameToDisplay = 10;
                 return;
             }
 
             if (!Checked)
             {
-                TileSheet.CurrentFrame = 9;
+                FrameToDisplay = 9;
                 return;
             }
 
-            TileSheet.CurrentFrame = Number;
+            FrameToDisplay = Number;
         }
 
         private int GetNumberToDisplay()
         {
             int surroundingBombs = 0;
-            SweeperGame.Instance.GetNeighbors(Position).ForEach(neighbour =>
+            SweeperGame.Instance.GetNeighbors(BoardPosition).ForEach(neighbour =>
             {
                 if (neighbour.Bomb)
                 {

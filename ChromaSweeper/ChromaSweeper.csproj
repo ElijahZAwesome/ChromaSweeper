@@ -1,9 +1,15 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <ApplicationIcon>Content\Minesweeper.ico</ApplicationIcon>
+    <Authors>ElijahZAwesome</Authors>
+    <Company>Meme Inc</Company>
+    <Description>A near perfect Minesweeper remake in the Chroma framework</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/ElijahZAwesome/ChromaSweeper</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ElijahZAwesome/ChromaSweeper</RepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Content\minesweeper.png" />
@@ -18,20 +24,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Content\faces.jpg">
+    <None Update="Content\*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\icon.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\Minesweeper.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\numbers.jpg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Content\tiles.jpg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
     </None>
   </ItemGroup>
 </Project>
