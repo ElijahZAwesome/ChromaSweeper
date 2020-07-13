@@ -14,7 +14,7 @@ namespace ChromaSweeper
     internal class SweeperGame : Game
     {
         public static SweeperGame Instance;
-        public readonly Random Rand = new Random();
+        public Random Rand = new Random();
 
         public Board Board;
         public Vector2 BoardPosition;
@@ -51,7 +51,7 @@ namespace ChromaSweeper
         {
             Window.Size = new Size((int)Board.BoardSize.X * Tile.TileSize + 20,
                 (int)Board.BoardSize.Y * Tile.TileSize + 27 + Constants.ScoreboardHeight);
-            if(settingsManager != null)
+            if (settingsManager != null)
                 settingsManager.Init(Window.Size);
             else
                 settingsManager = new SettingsManager(Window.Size);
@@ -323,6 +323,7 @@ namespace ChromaSweeper
                 {
                     case MouseButton.Left:
                         clickedTile.Check();
+                        Board.OpenRegion(clickedTile.BoardPosition);
                         break;
                     case MouseButton.Right:
                         clickedTile.Flag();

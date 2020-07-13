@@ -1,4 +1,5 @@
 ﻿using Chroma.Graphics;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace ChromaSweeper
@@ -35,7 +36,7 @@ namespace ChromaSweeper
             int bombsLeft = BombAmount;
             while (bombsLeft > 0)
             {
-                if(PlaceBombOnBoard(mousePos))
+                if (PlaceBombOnBoard(mousePos))
                 {
                     bombsLeft--;
                 }
@@ -68,13 +69,13 @@ namespace ChromaSweeper
 
         public void MoveBombAtPos(Vector2? position)
         {
-            if(position.HasValue)
+            if (position.HasValue)
             {
-                var tile = BoardArray[(int) position.Value.X, (int) position.Value.Y];
-                if(tile.Bomb)
+                var tile = BoardArray[(int)position.Value.X, (int)position.Value.Y];
+                if (tile.Bomb)
                 {
                     tile.Bomb = false;
-                    while(!PlaceBombOnBoard(position)) { }
+                    while (!PlaceBombOnBoard(position)) { }
                 }
             }
         }
@@ -84,6 +85,37 @@ namespace ChromaSweeper
             foreach (var tile in BoardArray)
             {
                 tile.Init();
+            }
+        }
+
+        public void OpenRegion(Vector2 clickPosition)
+        {
+            var tile = BoardArray[(int)clickPosition.X, (int)clickPosition.Y];
+            if (tile.Number == 0 && !tile.Bomb)
+            {
+                var q = new Queue<Tile>();
+
+                q.Enqueue(tile);
+
+                while (q.Count > 0)
+                {
+                    var queuedTile = q.Dequeue();
+                    queuedTile.Check();
+                    SweeperGame.Instance.GetNeighbors(queuedTile.BoardPosition).ForEach(neighbour =>
+                    {
+                        if (!neighbour.Checked && neighbour.Number == 0 && !neighbour.Bomb && !neighbour.RegionVisited)
+                        {
+                            neighbour.RegionVisited = true;
+                            q.Enqueue(neighbour);
+                        }
+                        else if (!neighbour.Checked && !neighbour.Bomb && !neighbour.RegionVisited)
+                        {
+                            neighbour.Check();
+                            neighbour.RegionVisited = true;
+                        }
+                    });
+                    //queuedTile.RegionVisited = false;
+                }
             }
         }
 

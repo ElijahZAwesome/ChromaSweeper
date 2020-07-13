@@ -17,6 +17,7 @@ namespace ChromaSweeper
         private InputField boardWidthField;
         private InputField boardHeightField;
         private InputField bombAmountField;
+        private InputField seedField;
         private Button cancelBtn;
         private Button acceptBtn;
 
@@ -74,6 +75,14 @@ namespace ChromaSweeper
                 SizeLimit = 3,
                 Placeholder = "Bombs: " + SweeperGame.Instance.Board.BombAmount
             };
+
+            seedField = new InputField(new Vector2(windowSize.Width / 2 - 60, bombAmountField.CalculatedPosition.Y + 25))
+            {
+                AllowOverflow = false,
+                Filter = "^[0-9]*$",
+                SizeLimit = 9,
+                Placeholder = "RNG Seed"
+            };
         }
 
         public void Show()
@@ -123,6 +132,13 @@ namespace ChromaSweeper
 
             SweeperGame.Instance.Board.BoardSize = new Vector2(newWidth, newHeight);
             SweeperGame.Instance.Board.BombAmount = newBombAmount;
+
+            int newSeed;
+            if (!int.TryParse(seedField.Text, out newSeed))
+            {
+                newSeed = new Random().Next();
+            }
+            SweeperGame.Instance.Rand = new Random(newSeed);
             SweeperGame.Instance.InitBoard();
         }
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
@@ -135,6 +151,7 @@ namespace ChromaSweeper
                 boardWidthField.Draw(context, gfx);
                 boardHeightField.Draw(context, gfx);
                 bombAmountField.Draw(context, gfx);
+                seedField.Draw(context, gfx);
                 cancelBtn.Draw(context, gfx);
                 acceptBtn.Draw(context, gfx);
             }
@@ -148,6 +165,7 @@ namespace ChromaSweeper
                 boardWidthField.Update(delta);
                 boardHeightField.Update(delta);
                 bombAmountField.Update(delta);
+                seedField.Update(delta);
                 cancelBtn.Update(delta);
                 acceptBtn.Update(delta);
             }
@@ -160,6 +178,7 @@ namespace ChromaSweeper
                 boardWidthField.KeyPressed(e);
                 boardHeightField.KeyPressed(e);
                 bombAmountField.KeyPressed(e);
+                seedField.KeyPressed(e);
             }
         }
 
@@ -170,22 +189,25 @@ namespace ChromaSweeper
                 boardWidthField.TextInput(e);
                 boardHeightField.TextInput(e);
                 bombAmountField.TextInput(e);
+                seedField.TextInput(e);
             }
         }
 
         public void Dispose()
         {
-            if(bgPanel != null)
+            if (bgPanel != null)
                 bgPanel.Dispose();
-            if(boardWidthField != null)
+            if (boardWidthField != null)
                 boardWidthField.Dispose();
-            if(boardHeightField != null)
+            if (boardHeightField != null)
                 boardHeightField.Dispose();
-            if(bombAmountField != null)
+            if (bombAmountField != null)
                 bombAmountField.Dispose();
-            if(cancelBtn != null)
+            if (seedField != null)
+                seedField.Dispose();
+            if (cancelBtn != null)
                 cancelBtn.Dispose();
-            if(acceptBtn != null)
+            if (acceptBtn != null)
                 acceptBtn.Dispose();
         }
 

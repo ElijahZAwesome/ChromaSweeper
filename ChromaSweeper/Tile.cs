@@ -16,6 +16,9 @@ namespace ChromaSweeper
 
         public bool Flagged;
         public bool Question;
+
+        public bool RegionVisited;
+
         /// <summary>
         /// The tile based position on the board
         /// </summary>
@@ -79,11 +82,6 @@ namespace ChromaSweeper
                 SweeperGame.Instance.BombHit(BoardPosition);
             }
 
-            if (Number == 0 && !Bomb)
-            {
-                CheckNeighbors();
-            }
-
             DetermineFrame();
         }
 
@@ -114,15 +112,6 @@ namespace ChromaSweeper
             }
 
             DetermineFrame();
-        }
-
-        private void CheckNeighbors()
-        {
-            SweeperGame.Instance.GetNeighbors(BoardPosition).ForEach(neighbour =>
-            {
-                if (!neighbour.Checked && !neighbour.Bomb)
-                    neighbour.Check();
-            });
         }
 
         public void Draw(RenderContext context)
